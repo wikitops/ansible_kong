@@ -1,0 +1,19 @@
+---
+
+konga_git_url: https://github.com/pantsel/konga.git
+konga_source_dir: /opt/konga
+konga_session_secret: 'jhgevudvzoe'
+konga_port: 1338
+konga_environment: development
+konga_log_level: info
+
+konga_db_adapter: postgres
+konga_db_host: "{{ groups['postgresql'][0] }}"
+konga_db_user: konga
+konga_db_password: lidjbeb3Nhi34H5
+konga_db_port: 5432
+konga_db_database: konga
+konga_db_poolsize: 10
+konga_db_ssl: false
+
+konga_kong_url: http://127.0.0.1:8001

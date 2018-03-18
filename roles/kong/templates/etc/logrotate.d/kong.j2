@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+
+{{ kong_prefix }}logs/*.log {
+    {{ kong_logrotate_frequency|default('weekly') }}
+    rotate {{ kong_logrotate_rotate|default(5) }}
+    missingok
+    maxsize {{ kong_logrotate_maxsize|default('500M') }}
+    notifempty
+    sharedscripts
+    compress
+    postrotate
+        [ ! -f {{ kong_prefix }}/pids/nginx.pid ] || kill -USR1 $(cat {{ kong_prefix }}/pids/nginx.pid)
+    endscript
+}

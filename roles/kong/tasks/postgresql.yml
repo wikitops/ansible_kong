@@ -1,0 +1,32 @@
+---
+
+- name: KONG | Create database
+  postgresql_db:
+    name: "{{ kong_postgresql_database }}"
+    port: "{{ kong_postgresql_port }}"
+    state: present
+  become: yes
+  become_user: postgres
+  delegate_to: "{{ kong_postgresql_host }}"
+
+- name: KONG | Create role
+  postgresql_user:
+    db: "{{ kong_postgresql_database }}"
+    name: "{{ kong_postgresql_user }}"
+    password: "md5{{ (kong_postgresql_password + kong_postgresql_user)|hash('md5') }}"
+    port: "{{ kong_postgresql_port }}"
+    priv: ALL
+    state: present
+    encrypted: yes
+  become: yes
+  become_user: postgres
+  delegate_to: "{{ kong_postgresql_host }}"
+
+- name: KONG | Configure security
+  lineinfile:
+    path: "/etc/postgresql/9.6/main/pg_hba.conf"
+    line: "host {{ kong_postgresql_database }} {{ kong_postgresql_user }} {{ inventory_hostname }}/32 md5"
+  notify: Restart postgresql
+
+- name: KONG | Make sure all handlers run
+  meta: flush_handlers

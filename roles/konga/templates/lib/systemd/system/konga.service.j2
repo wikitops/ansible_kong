@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Kong Dashboard in production mode
+After=syslog.target network.target {{ 'postgresql.service' if inventory_hostname in groups['postgresql'] }}
+Requires={{ 'postgresql.service' if inventory_hostname in groups['postgresql'] else '' }}
+
+[Service]
+EnvironmentFile=/etc/environment
+User=root
+Group=root
+WorkingDirectory={{ konga_source_dir }}
+ExecStart=/usr/bin/node app.js
+KillMode=control-group
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

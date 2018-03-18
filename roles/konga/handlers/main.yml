@@ -1,0 +1,13 @@
+---
+
+- name: Restart postgresql
+  systemd:
+    name: postgresql
+    state: restarted
+
+- name: Restart konga
+  systemd:
+    daemon_reload: yes
+    name: konga
+    state: restarted
+    enabled: yes

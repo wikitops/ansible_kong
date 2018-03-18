@@ -1,0 +1,32 @@
+---
+
+- name: KONGA | Create database
+  postgresql_db:
+    name: "{{ konga_db_database }}"
+    port: "{{ konga_db_port }}"
+    state: present
+  become: yes
+  become_user: postgres
+  delegate_to: "{{ konga_db_host }}"
+
+- name: KONGA | Create role
+  postgresql_user:
+    db: "{{ konga_db_database }}"
+    name: "{{ konga_db_user }}"
+    password: "md5{{ (konga_db_password + konga_db_user)|hash('md5') }}"
+    port: "{{ konga_db_port }}"
+    priv: ALL
+    state: present
+    encrypted: yes
+  become: yes
+  become_user: postgres
+  delegate_to: "{{ konga_db_host }}"
+
+- name: KONGA | Configure security
+  lineinfile:
+    path: "/etc/postgresql/9.6/main/pg_hba.conf"
+    line: "host {{ konga_db_database }} {{ konga_db_user }} {{ inventory_hostname }}/32 md5"
+  notify: Restart postgresql
+
+- name: KONGA | Make sure all handlers run
+  meta: flush_handlers

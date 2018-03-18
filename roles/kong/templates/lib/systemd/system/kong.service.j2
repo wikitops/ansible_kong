@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Kong API Gateway
+After=syslog.target network.target {{ 'postgresql.service' if inventory_hostname in groups['postgresql'] }}
+Requires={{ 'postgresql.service' if inventory_hostname in groups['postgresql'] else '' }}
+
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStartPre=/usr/local/bin/kong check /etc/kong/kong.conf
+ExecStart=/usr/local/bin/kong start {{ '--nginx-conf=/etc/kong/custom-nginx.template' if kong_nginx_template else '' }}
+ExecReload=/usr/local/bin/kong reload {{ '--nginx-conf=/etc/kong/custom-nginx.template' if kong_nginx_template else '' }}
+ExecStop=/usr/local/bin/kong stop
+LimitNOFILE={{ kong_max_files_limit }}
+
+[Install]
+WantedBy=multi-user.target

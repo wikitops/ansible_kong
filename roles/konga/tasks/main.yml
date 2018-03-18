@@ -1,0 +1,9 @@
+---
+
+- name: KONG | Manage Kong database
+  include_tasks: postgresql.yml
+  tags: konga-postgresql
+
+- name: KONG | Manage Konga
+  include_tasks: konga.yml
+  tags: konga

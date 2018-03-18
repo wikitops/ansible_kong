@@ -1,0 +1,33 @@
+---
+
+kong_version: 0.12.3
+kong_deb_url: "https://kong.bintray.com/kong-community-edition-deb/dists/kong-community-edition-{{ kong_version }}.{{ ansible_distribution_release | lower }}.all.deb"
+
+kong_prefix: /usr/local/kong/
+kong_log_level: notice
+kong_custom_plugins: ""
+
+kong_proxy_port: 8000
+kong_proxy_port_ssl: "8443"
+kong_proxy_listen: "0.0.0.0:{{ kong_proxy_port }}"
+kong_proxy_listen_ssl: "0.0.0.0:{{ kong_proxy_port_ssl }}"
+
+kong_admin_port: 8001
+kong_admin_port_ssl: "8444"
+kong_admin_listen: "127.0.0.1:{{ kong_admin_port }}"
+kong_admin_listen_ssl: "127.0.0.1:{{ kong_admin_port_ssl }}"
+
+kong_database: postgres
+kong_postgresql_host: "{{ groups['postgresql'][0] }}"
+kong_postgresql_port: 5432
+kong_postgresql_user: kong
+kong_postgresql_password: DHqbz4nfjfj7js2
+kong_postgresql_database: kong
+
+kong_max_files_limit: 65535
+
+kong_logrotate_frequency: weekly
+kong_logrotate_rotate: 5
+kong_logrotate_maxsize: 500M
+
+kong_nginx_template: false

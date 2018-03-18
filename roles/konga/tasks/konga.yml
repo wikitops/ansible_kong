@@ -1,0 +1,91 @@
+---
+
+- name: KONGA | Check installation
+  stat:
+    path: "{{ konga_source_dir }}"
+  register: konga_install
+
+- name: KONGA | Install dependencies
+  npm:
+    name: "{{ item }}"
+    state: present
+    global: yes
+    production: yes
+  with_items:
+    - bower
+    - gulp
+    - sails
+    - sails-postgresql
+
+- name: KONGA | Configure systemd
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    # - { src: "lib/systemd/system/konga-dev.service.j2", dest: "/lib/systemd/system/konga-dev.service" }
+    - { src: "lib/systemd/system/konga.service.j2", dest: "/lib/systemd/system/konga.service" }
+
+- name: KONGA | Configure environment
+  lineinfile:
+    path: /etc/environment
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - "DB_ADAPTER={{ konga_db_adapter }}"
+    - "DB_HOST={{ konga_db_host }}"
+    - "DB_USER={{ konga_db_user }}"
+    - "DB_PASSWORD={{ konga_db_password }}"
+    - "DB_PORT={{ konga_db_port }}"
+    - "DB_DATABASE={{ konga_db_database }}"
+    - "DB_POOLSIZE={{ konga_db_poolsize }}"
+    - "DB_SSL={{ konga_db_ssl }}"
+    - "KONG_ADMIN_URL={{ konga_kong_url }}"
+
+- block:
+
+  - name: KONGA | Ensure Konga is not running
+    systemd:
+      name: konga
+      state: stopped
+
+  - name: KONGA | Download sources
+    git:
+      repo: "{{ konga_git_url }}"
+      dest: "{{ konga_source_dir }}"
+
+  - name: KONGA | Configure development mode
+    template:
+      src: opt/konga/config/local.js.j2
+      dest: /opt/konga/config/local.js
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: KONGA | Build sources
+    command: npm --unsafe-perm --production install
+    args:
+      chdir: "{{ konga_source_dir }}"
+
+  - name: KONGA | Start in development mode after update
+    systemd:
+      name: konga
+      state: started
+
+  - name: KONGA | Wait for Konga
+    wait_for:
+      sleep: 1
+      state: started
+      port: "{{ konga_port }}"
+
+  - name: KONGA | Configure production mode
+    replace:
+      regexp: "'development',"
+      path: "{{ konga_source_dir }}/config/local.js"
+      replace: "'production',"
+      backup: no
+    notify: Restart konga
+
+  when: not konga_install.stat.exists

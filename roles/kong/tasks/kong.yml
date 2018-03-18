@@ -1,0 +1,78 @@
+---
+
+- name: KONG | Install prerequisities packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - procps
+    - perl
+    - dnsmasq
+    - libpcre3
+    - lua5.2
+    - luarocks
+    - netcat
+    - openssl
+    - python-psycopg2
+
+- name: KONG | Installation
+  apt:
+    deb: "{{ kong_deb_url }}"
+    state: present
+
+- name: KONG | Configuration
+  template:
+    src: etc/kong/kong.conf.j2
+    dest: /etc/kong/kong.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Reload kong
+  tags: config
+
+- name: KONG | Configuration Nginx
+  template:
+    src: etc/kong/nginx.conf.j2
+    dest: /etc/kong/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: kong_nginx_template is defined and kong_nginx_template
+  notify:
+    - Reload kong
+  tags: config
+
+- name: KONG | Migrate database
+  command: /usr/local/bin/kong migrations up
+  args:
+    creates: /tmp/kong.migration
+
+- name: KONG | Configure systemd
+  template:
+    src: lib/systemd/system/kong.service.j2
+    dest: /lib/systemd/system/kong.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: Restart kong
+
+- name: KONG | Manage logrotate
+  template:
+    src: etc/logrotate.d/kong.j2
+    dest: /etc/logrotate.d/kong
+    owner: root
+    group: root
+    mode: 0644
+
+- name: KONG | Make sure all handlers run
+  meta: flush_handlers
+
+- name: KONG | Centralize logs
+  file:
+    state: link
+    src: "{{ kong_prefix }}logs"
+    dest: /var/log/kong
+    owner: root
+    group: root
+    mode: 0755

@@ -1,0 +1,17 @@
+---
+
+- name: NODEJS | Import key
+  apt_key:
+    url: "{{ nodejs_apt_key }}"
+    state: present
+
+- name: NODEJS | Add repository
+  apt_repository:
+    repo: "{{ nodejs_apt_url }}"
+    state: present
+
+- name: NODEJS | Installation
+  apt:
+    name: nodejs
+    update_cache: yes
+    state: present
